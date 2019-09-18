@@ -13,7 +13,7 @@ const puppeteerHubUrl =
   process.env.PUPPETEER_HUB_URL ||
   'http://10.32.44.22:7500';
 
-const connectionType = process.env.connectionType || 'remote';
+const connectionType = process.env.connectionType || 'local';
 
 function getEnvOptions() {
     let options = '';

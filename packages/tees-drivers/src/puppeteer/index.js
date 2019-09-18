@@ -1,7 +1,9 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const {PptrHubHelper} = require('./pptrHub/pptrHubHelper');
-const {connectionType} = require('./pptrHub/options');
+const {connectionType} = require('./pptrHub/options');  
+// const  {PptrFactory} = require('./pptrFactory');
+const { getAbstractPptrFactory } = require('./pptr');
 const {
   Driver: BaseDriver,
   Query: BaseQuery
@@ -207,27 +209,42 @@ class Driver extends BaseDriver {
       ],
     } : mergeSetting;
     this.connType = connectionType;
-    switch(this.connType) {
-      case 'remote': {
-        this.pptr = new PptrHubHelper();
-        this.nodeConfig = await this.pptr.getRemoteNode();
-        const url = `${this.nodeConfig.puppeteerWSUrl}?headless=${
-          isExtension ? 'false' : this._isHeadless
-        }`;
-        this._browser = await this._program.connect({ browserWSEndpoint: url })
-        break;
-      }
-      case 'local':
-      default : {
-        this._browser = await this._program.launch({
-          ...setting,
-          headless: isExtension ? false : this._isHeadless,
-          executablePath: `${executablePath}`,
-          userDataDir: `${userDataDir}`,
-        });
-        break;
-      }
-    }
+    const localSetting = {
+      ...setting,
+      headless: isExtension ? false : this._isHeadless,
+      executablePath: `${executablePath}`,
+      userDataDir: `${userDataDir}`,
+    };
+    
+    const pptrClass = getAbstractPptrFactory(this.connType);
+    this._pptr = new pptrClass(this._program, localSetting);
+    this._browser = await this._pptr.createPptr();
+    
+    // const pptr = new PptrFactory(this.connType, this._program, localSetting);
+    // this._browser = await pptr.createPptr();
+
+    // switch(this.connType) {
+    //   case 'remote': {
+    //     this.pptr = new PptrHubHelper();
+    //     this.nodeConfig = await this.pptr.getRemoteNode();
+    //     const url = `${this.nodeConfig.puppeteerWSUrl}?headless=${
+    //       isExtension ? 'false' : this._isHeadless
+    //     }`;
+    //     this._browser = await this._program.connect({ browserWSEndpoint: url })
+    //     break;
+    //   }
+    //   case 'local':
+    //   default : {
+    //     this._browser = await this._program.launch({
+    //       ...setting,
+    //       headless: isExtension ? false : this._isHeadless,
+    //       executablePath: `${executablePath}`,
+    //       userDataDir: `${userDataDir}`,
+    //     });
+    //     break;
+    //   }
+    // }
+
   }
 
   async newPage() {
@@ -246,21 +263,22 @@ class Driver extends BaseDriver {
   async close() {
     if (this._browser) {
       try {
-        switch(this.connType) {
-          case 'remote': {
-            if (this.nodeConfig.networkSimulator) {
-              await this._browser.close();
-            } else {
-              this._browser.disconnect();
-            }
-            await this.pptr.releaseNode();
-            break;
-          }
-          case 'local':
-          default:
-            await this._browser.close();
-            break;
-        }
+        await this._pptr.closePptr();
+        // switch(this.connType) {
+        //   case 'remote': {
+        //     if (this.nodeConfig.networkSimulator) {
+        //       await this._browser.close();
+        //     } else {
+        //       this._browser.disconnect();
+        //     }
+        //     await this.pptr.releaseNode();
+        //     break;
+        //   }
+        //   case 'local':
+        //   default:
+        //     await this._browser.close();
+        //     break;
+        // }
       } catch (e) {
         console.error(e);
       }

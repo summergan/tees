@@ -15,24 +15,54 @@ class PptrHubHelper{
 
     async getWebsocketUrlFromHub(nodeConfig) {
       let data;
-      await retryUntilPass(
-        async () => {
-          const response = await this.puppeteerHubClient.acquireNode(
-            _.omitBy(
-            {
-              system: nodeConfig.system,
-              isVM: nodeConfig.isVM,
-              networkSimulator: nodeConfig.networkSimulator,
-              sessionMode: nodeConfig.sessionMode,
-              browserType: nodeConfig.browserType,
-              maxConcurrentSessions: nodeConfig.maxConcurrentSessions,
-            },
-            _.isUndefined,
-          ),
-        );
-        assert.strictEqual(response.success, true);
-        data = response.data;
+      let _nodeConfig = {};
+      const _config = Object.entries({
+        system: nodeConfig.system,
+        isVM: nodeConfig.isVM,
+        networkSimulator: nodeConfig.networkSimulator,
+        sessionMode: nodeConfig.sessionMode,
+        browserType: nodeConfig.browserType,
+        maxConcurrentSessions: nodeConfig.maxConcurrentSessions
+      }).filter(item => {
+            if(!item.includes(undefined)){
+            return item;
+          }
       });
+      _config.forEach(([key,value]) => _nodeConfig[key] = value)
+     
+      const response = await this.puppeteerHubClient.acquireNode(JSON.stringify(_nodeConfig))  
+      if(response.success) {
+        data = response.data;
+        console.log(data,'data')
+      }
+
+      // let retry = setInterval(async () => {
+      //   let response = await this.puppeteerHubClient.acquireNode(JSON.stringify(_nodeConfig))
+      //   if(response.success) {
+      //     data = response.data;
+      //     console.log(data,'data')
+      //     clearInterval(retry);
+      //   }
+      // }, 1000);
+      
+      // await retryUntilPass(
+      //   async () => {
+      //     const response = await this.puppeteerHubClient.acquireNode(
+      //       _.omitBy(
+      //       {
+      //         system: nodeConfig.system,
+      //         isVM: nodeConfig.isVM,
+      //         networkSimulator: nodeConfig.networkSimulator,
+      //         sessionMode: nodeConfig.sessionMode,
+      //         browserType: nodeConfig.browserType,
+      //         maxConcurrentSessions: nodeConfig.maxConcurrentSessions,
+      //       },
+      //       _.isUndefined,
+      //     ),
+      //   );
+      //   assert.strictEqual(response.success, true);
+      //   data = response.data;
+      // });
         return {
           connectionType: 'remote',
           puppeteerWSUrl: `ws://${data.node.host}:${data.node.port}`,
