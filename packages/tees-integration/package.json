@@ -61,14 +61,15 @@
     "webpack": "4.41.0",
     "webpack-dev-server": "3.2.1",
     "webpack-manifest-plugin": "2.1.1",
-    "workbox-webpack-plugin": "4.3.1"
+    "workbox-webpack-plugin": "4.3.1",
+    "puppeteer_hub_client": "https://git.ringcentral.com/TA/tools/puppeteer_hub_client/uploads/bb7bb360af9625354a85400b51237595/puppeteer-hub-client-v1.2.tgz"
   },
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "forever:start": "forever start scripts/start.js",
     "forever:stop": "forever stop scripts/start.js",
-    "test:tees": "tees run integration-test/** -H",
+    "test:tees": "tees run integration-test/** -H -S",
     "test": "yarn forever:start && wait-on tcp:3000 && yarn test:tees && yarn forever:stop"
   },
   "eslintConfig": {

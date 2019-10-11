@@ -1,4 +1,4 @@
-const { Query } = require('./integration-test/lib/puppeteerQuery');
+const { Query, Driver } = require('./integration-test/lib/puppeteerQuery');
 
 module.exports = {
   selectorLabel: 'class',
@@ -10,11 +10,14 @@ module.exports = {
       }
     }
   },
-  drivers: {
+  drivers: 
+    {
     puppeteer: {
       Query,
+      Driver,
     }
-  },
+  }
+  ,
   lookupConfig({
     config,
     tag
